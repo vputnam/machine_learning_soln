@@ -1,6 +1,6 @@
 import azure.functions as func
-from azure.cosmos import CosmosClient, exceptions
-from azure.cosmos.partition_key import PartitionKey
+from azure.cosmos import exceptions
+import cosmos_db
 import json
 import logging
 import data_models
@@ -15,37 +15,6 @@ app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 def Create(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
-    # Cosmos DB connection information
-    endpoint = os.environ["endpoint"]
-    key = os.environ["key"]
-    database_id = "ml-data"
-    container_id = "robot"
-    partition_key = "/id"
-
-    # Set the total throughput (RU/s) for the database and container
-    database_throughput = 2000
-
-    # Initialize the Cosmos client
-    client = CosmosClient(endpoint, key)
-
-    # Create or get a reference to a database
-    try:
-        database = client.create_database_if_not_exists(id=database_id)
-        logging.info(f'Database "{database_id}" created or retrieved successfully.')
-
-    except exceptions.CosmosResourceExistsError:
-        database = client.get_database_client(database_id)
-        logging.info('Database with id \'{0}\' was found'.format(database_id))
-
-    # Create or get a reference to a container
-    try:
-        container = database.create_container(id=container_id, partition_key=PartitionKey(path='/partitionKey'))
-        logging.info('Container with id \'{0}\' created'.format(container_id))
-
-    except exceptions.CosmosResourceExistsError:
-        container = database.get_container_client(container_id)
-        logging.info('Container with id \'{0}\' was found'.format(container_id))
-
     # Check for data in request body 
     try:
         req_body = req.get_json()
@@ -59,7 +28,7 @@ def Create(req: func.HttpRequest) -> func.HttpResponse:
     
     # Validate JSON body shape 
     try: 
-        person = data_models.DBData(**data)
+        validate = data_models.DBData(**data)
     except ValidationError:
         logging.info('Database record malformed. Check structure.')
         return func.HttpResponse(
@@ -69,7 +38,8 @@ def Create(req: func.HttpRequest) -> func.HttpResponse:
 
     # Create item in database
     try :
-        container.create_item(body=data)
+        cosmosClient = cosmos_db.CosmosDB()
+        cosmosClient.create(data)
     except exceptions.CosmosResourceExistsError:
         logging.info('Record aready exists in database. Please modify your request')
         return func.HttpResponse(
