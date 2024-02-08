@@ -1,6 +1,7 @@
 import azure.functions as func
 from azure.cosmos import CosmosClient, exceptions
 from azure.cosmos.partition_key import PartitionKey
+import json
 import logging
 import data_models
 import os
@@ -45,9 +46,16 @@ def Create(req: func.HttpRequest) -> func.HttpResponse:
         container = database.get_container_client(container_id)
         logging.info('Container with id \'{0}\' was found'.format(container_id))
 
-    # Get data from JSON body
-    req_body = req.get_json()
-    data = req_body.get('data')
+    # Check for data in request body 
+    try:
+        req_body = req.get_json()
+        data = req_body.get('data')
+    except ValueError:
+        logging.info('X_test data not included in request body. Please modify your request and try again.')
+        return func.HttpResponse(
+            "Data not included in request body. Please modify your request and try again.",
+            status_code=400
+        )
     
     # Validate JSON body shape 
     try: 
@@ -78,21 +86,38 @@ def Create(req: func.HttpRequest) -> func.HttpResponse:
 def Predict(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
     
-    req_body = req.get_json()
 
     try :
         loaded_model = pickle.load(open('model.pkl', 'rb'))
     except FileNotFoundError:
         raise Exception("Model file not found.")
 
+    
+    # Check for X test in request body 
     try:
+        req_body = req.get_json()
         X_test = req_body.get('X_test')
     except ValueError:
-        raise Exception("Please include X_test parameter values in body.")
-    else:
-        data = pd.json_normalize(X_test)
-        prediction = loaded_model.predict(data)
-        prediction_json = json.dumps({'prediction': prediction.tolist()})
+        logging.info('X_test data not included in request body. Please modify your request and try again.')
+        return func.HttpResponse(
+            "X_test data not included in request body. Please modify your request and try again.",
+            status_code=400
+        )
+
+    # Validate JSON body shape 
+    try:
+        for record in X_test: 
+            validate = data_models.TestDataX(**record)
+    except ValidationError:
+        logging.info('At least one X_test record malformed. Check structure.')
+        return func.HttpResponse(
+            "X_test record malformed. Please see documentation for proper shape.",
+            status_code=400
+        )        
+
+    data = pd.json_normalize(X_test)
+    prediction = loaded_model.predict(data)
+    prediction_json = json.dumps({'prediction': prediction.tolist()})
 
     return func.HttpResponse(
             prediction_json,
