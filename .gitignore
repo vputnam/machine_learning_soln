@@ -1,2 +1,6 @@
 
 Data/*
+
+# Jupyter Notebook
+Jupyter/.ipynb_checkpoints
+Jupyter/*.pkl
