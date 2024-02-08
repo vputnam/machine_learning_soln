@@ -3,4 +3,8 @@
 # Manually managing azure-functions-worker may cause unexpected issues
 
 azure-functions
-numpy 
+azure-cosmos
+numpy
+scikit-learn
+pydantic
+pandas
