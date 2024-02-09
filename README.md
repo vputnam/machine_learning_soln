@@ -1,16 +1,16 @@
-## Overview  
+## Project Overview
 
-The goal of this project is to predict forces experienced by Robots in a system. There are two major components to this project. 
+This project aims to forecast the forces experienced by robots within a system, comprising two main components:
 
-1. Jupyter notebooks to analyse data and train our model to predict force. 
-2. A Python dotnet API to make a prediction in realtime 
+Jupyter notebooks for data analysis and model training to predict force.
+A Python dotnet API for real-time force prediction.
+The subsequent sections in this readme will detail the structure of component 2. For a comprehensive explanation of the model methodology and results, refer to the notebooks in the `Jupyter/` directory.
 
-The follow text in this readme will describe the make up of component 2. For a detalied explationation of model methodology and results see notebooks in `Jupyter/` directory. 
+## API Functions
 
-## API Functions 
-This API contains two functions `create` to add new records to our database and `predict` to make a realtime prediction for a fresh set of features. These functions have been deployed to Azure running on the free tier API. 
+This API encompasses two functions: `create` for adding new records to our database and `predict` for making real-time predictions based on a fresh set of features. These functions have been deployed to Azure, operating on the free tier API.
 
-I chose to make these API's in order to demonstarate that when the model is completed it can be queried on demand instantly. Additianlly, when a new data is created it can be posted to Azure and added to a cosmos db. This data can then be queried later in order to retrain our model. In a kind of ciricualr pipline. 
+The decision to develop these APIs was made to showcase that once the model is finalized, it can be instantly queried on demand. Additionally, newly created data can be posted to Azure and added to a Cosmos DB, enabling future querying for retraining our model, creating a circular pipeline.
 
 ### Create
 
@@ -90,3 +90,7 @@ example body:
 az login
 func azure functionapp publish machina-labs-ml
 ```
+
+## Future Work
+
+Unfortunately, due to the limitations of the Azure free tier, I was unable to deploy my actual model to the service. The free tier has certain capacity restrictions, and I would need to upgrade to a paid plan to scale up my service. In the future, I plan to scale out my function app to accommodate this larger model.
